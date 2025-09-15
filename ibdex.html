@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CGPA Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    .buttons {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .add-btn { background: #28a745; color: white; }
+    .calc-btn { background: #007bff; color: white; }
+    .reset-btn { background: #dc3545; color: white; }
+    .download-btn { background: #17a2b8; color: white; }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e9f7ef;
+      border: 1px solid #28a745;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 18px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CGPA Calculator</h1>
+  <div class="container">
+    <table id="semesterTable">
+      <thead>
+        <tr>
+          <th>Semester</th>
+          <th>SGPA</th>
+          <th>Total Credits</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="number" min="1" value="1" /></td>
+          <td><input type="number" min="0" max="10" step="0.01" /></td>
+          <td><input type="number" min="1" /></td>
+          <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="buttons">
+      <button class="add-btn" onclick="addRow()">+ Add Semester</button>
+      <button class="calc-btn" onclick="calculateCGPA()">Calculate CGPA</button>
+      <button class="reset-btn" onclick="resetTable()">Reset</button>
+      <button class="download-btn" onclick="downloadResult()">Download Result</button>
+    </div>
+    <div id="result" class="result" style="display:none;"></div>
+    <canvas id="cgpaChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    let cgpaHistory = [];
+
+    function addRow() {
+      const table = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
+      const newRow = table.insertRow();
+      newRow.innerHTML = `
+        <td><input type="number" min="1" value="${table.rows.length+1}" /></td>
+        <td><input type="number" min="0" max="10" step="0.01" /></td>
+        <td><input type="number" min="1" /></td>
+        <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
+      `;
+    }
+
+    function removeRow(btn) {
+      const row = btn.parentNode.parentNode;
+      row.parentNode.removeChild(row);
+    }
+
+    function calculateCGPA() {
+      const rows = document.getElementById("semesterTable").getElementsByTagName("tbody")[0].rows;
+      let totalPoints = 0;
+      let totalCredits = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        let sgpa = parseFloat(rows[i].cells[1].children[0].value);
+        let credit = parseFloat(rows[i].cells[2].children[0].value);
+
+        if (!isNaN(sgpa) && !isNaN(credit)) {
+          totalPoints += sgpa * credit;
+          totalCredits += credit;
+        }
+      }
+
+      if (totalCredits === 0) {
+        alert("Please enter valid SGPA and Credits.");
+        return;
+      }
+
+      const cgpa = (totalPoints / totalCredits).toFixed(2);
+      document.getElementById("result").style.display = "block";
+      document.getElementById("result").innerHTML = `Your CGPA is <b>${cgpa}</b>`;
+
+      // Store semester-wise SGPA for chart
+      cgpaHistory = [];
+      for (let i = 0; i < rows.length; i++) {
+        let sem = parseInt(rows[i].cells[0].children[0].value);
+        let sgpa = parseFloat(rows[i].cells[1].children[0].value);
+        if (!isNaN(sem) && !isNaN(sgpa)) {
+          cgpaHistory.push({ sem: sem, sgpa: sgpa });
+        }
+      }
+      drawChart();
+    }
+
+    function resetTable() {
+      const tbody = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
+      tbody.innerHTML = `
+        <tr>
+          <td><input type="number" min="1" value="1" /></td>
+          <td><input type="number" min="0" max="10" step="0.01" /></td>
+          <td><input type="number" min="1" /></td>
+          <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
+        </tr>
+      `;
+      document.getElementById("result").style.display = "none";
+      cgpaHistory = [];
+      drawChart();
+    }
+
+    function drawChart() {
+      const ctx = document.getElementById("cgpaChart").getContext("2d");
+      if (window.cgpaChartInstance) {
+        window.cgpaChartInstance.destroy();
+      }
+      window.cgpaChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: cgpaHistory.map(item => `Sem ${item.sem}`),
+          datasets: [{
+            label: "Semester SGPA",
+            data: cgpaHistory.map(item => item.sgpa),
+            fill: false,
+            borderColor: "#007bff",
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+
+    function downloadResult() {
+      const result = document.getElementById("result").innerText;
+      if (!result) {
+        alert("Please calculate CGPA first.");
+        return;
+      }
+      const blob = new Blob([result], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "cgpa_result.txt";
+      link.click();
+    }
+  </script>
+</body>
+</html>
