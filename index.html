@@ -1,78 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>CGPA Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f6f9;
-      color: #333;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff7eb3, #6a11cb, #2575fc);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      color: #f5f5f5;
     }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      margin-top: 40px;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.25);
+      width: 90%;
+      max-width: 850px;
+    }
+
     h1 {
       text-align: center;
+      color: #00d9ff;
       margin-bottom: 20px;
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
     }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+    button {
+      font-family: inherit;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      padding: 10px 16px;
+      margin: 6px;
+      background: #00d9ff;
+      color: #0f0f0f;
     }
-    table {
+
+    button:hover {
+      background: #00ffae;
+      color: #0f0f0f;
+      transform: translateY(-2px);
+      box-shadow: 0 0 12px rgba(0, 217, 255, 0.8);
+    }
+
+    #semesterTable {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
+
+    #semesterTable th, #semesterTable td {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px;
       text-align: center;
     }
-    th {
-      background: #007bff;
-      color: white;
+
+    #semesterTable th {
+      background: rgba(0, 0, 0, 0.4);
+      color: #00d9ff;
+      font-weight: 600;
     }
-    .buttons {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 10px 15px;
-      border: none;
+
+    #semesterTable td input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
+      padding: 5px;
+      color: #f5f5f5;
     }
-    .add-btn { background: #28a745; color: white; }
-    .calc-btn { background: #007bff; color: white; }
-    .reset-btn { background: #dc3545; color: white; }
-    .download-btn { background: #17a2b8; color: white; }
-    .result {
+
+    #result {
       margin-top: 20px;
-      padding: 15px;
-      background: #e9f7ef;
-      border: 1px solid #28a745;
-      border-radius: 8px;
       text-align: center;
-      font-size: 18px;
+      font-size: 1.3em;
+      color: #00ffae;
+      font-weight: bold;
+      text-shadow: 0 0 6px rgba(0,255,174,0.6);
     }
-    canvas {
+
+    .chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin-top: 20px;
+    }
+
+    canvas {
+      max-width: 400px;
+      max-height: 400px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .user-info {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .user-info input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      padding: 8px;
+      color: #f5f5f5;
+      text-transform: capitalize; /* Auto-capitalize first letter */
     }
   </style>
 </head>
 <body>
-  <h1>CGPA Calculator</h1>
-  <div class="container">
+  <div class="container" id="content">
+    <h1>CGPA Calculator</h1>
+
+    <!-- User Info Section -->
+    <div class="user-info">
+      <input type="text" id="studentName" placeholder="Enter Your Name">
+      <input type="text" id="rollNo" placeholder="Enter Roll No.">
+    </div>
+
     <table id="semesterTable">
       <thead>
         <tr>
@@ -87,128 +158,165 @@
           <td><input type="number" min="1" value="1" /></td>
           <td><input type="number" min="0" max="10" step="0.01" /></td>
           <td><input type="number" min="1" /></td>
-          <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
+          <td><button onclick="removeRow(this)">X</button></td>
         </tr>
       </tbody>
     </table>
-    <div class="buttons">
-      <button class="add-btn" onclick="addRow()">+ Add Semester</button>
-      <button class="calc-btn" onclick="calculateCGPA()">Calculate CGPA</button>
-      <button class="reset-btn" onclick="resetTable()">Reset</button>
-      <button class="download-btn" onclick="downloadResult()">Download Result</button>
+    <button onclick="addRow()">➕ Add Semester</button>
+    <button onclick="calculateCGPA()">📊 Calculate CGPA</button>
+    <button onclick="resetTable()">♻ Reset</button>
+    <button onclick="downloadPDF()">⬇ Download</button>
+
+    <div id="result" style="display:none;"></div>
+    <div class="chart-container">
+      <canvas id="cgpaChart"></canvas>
     </div>
-    <div id="result" class="result" style="display:none;"></div>
-    <canvas id="cgpaChart" width="400" height="200"></canvas>
   </div>
 
   <script>
-    let cgpaHistory = [];
+    let semesterCounter = 1;
+    let chart;
 
-    function addRow() {
-      const table = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
-      const newRow = table.insertRow();
-      newRow.innerHTML = `
-        <td><input type="number" min="1" value="${table.rows.length+1}" /></td>
-        <td><input type="number" min="0" max="10" step="0.01" /></td>
-        <td><input type="number" min="1" /></td>
-        <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
-      `;
-    }
-
-    function removeRow(btn) {
-      const row = btn.parentNode.parentNode;
-      row.parentNode.removeChild(row);
-    }
-
-    function calculateCGPA() {
-      const rows = document.getElementById("semesterTable").getElementsByTagName("tbody")[0].rows;
-      let totalPoints = 0;
-      let totalCredits = 0;
-
-      for (let i = 0; i < rows.length; i++) {
-        let sgpa = parseFloat(rows[i].cells[1].children[0].value);
-        let credit = parseFloat(rows[i].cells[2].children[0].value);
-
-        if (!isNaN(sgpa) && !isNaN(credit)) {
-          totalPoints += sgpa * credit;
-          totalCredits += credit;
-        }
-      }
-
-      if (totalCredits === 0) {
-        alert("Please enter valid SGPA and Credits.");
-        return;
-      }
-
-      const cgpa = (totalPoints / totalCredits).toFixed(2);
-      document.getElementById("result").style.display = "block";
-      document.getElementById("result").innerHTML = `Your CGPA is <b>${cgpa}</b>`;
-
-      // Store semester-wise SGPA for chart
-      cgpaHistory = [];
-      for (let i = 0; i < rows.length; i++) {
-        let sem = parseInt(rows[i].cells[0].children[0].value);
-        let sgpa = parseFloat(rows[i].cells[1].children[0].value);
-        if (!isNaN(sem) && !isNaN(sgpa)) {
-          cgpaHistory.push({ sem: sem, sgpa: sgpa });
-        }
-      }
-      drawChart();
-    }
-
-    function resetTable() {
-      const tbody = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
-      tbody.innerHTML = `
-        <tr>
-          <td><input type="number" min="1" value="1" /></td>
+    window.onload = function() {
+      window.addRow = function() {
+        semesterCounter++;
+        const table = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
+        const newRow = table.insertRow();
+        newRow.innerHTML = `
+          <td><input type="number" min="1" value="${semesterCounter}" /></td>
           <td><input type="number" min="0" max="10" step="0.01" /></td>
           <td><input type="number" min="1" /></td>
-          <td><button onclick="removeRow(this)" style="background:#dc3545; color:#fff; border:none; padding:5px 8px; border-radius:5px;">X</button></td>
-        </tr>
-      `;
-      document.getElementById("result").style.display = "none";
-      cgpaHistory = [];
-      drawChart();
-    }
-
-    function drawChart() {
-      const ctx = document.getElementById("cgpaChart").getContext("2d");
-      if (window.cgpaChartInstance) {
-        window.cgpaChartInstance.destroy();
+          <td><button onclick="removeRow(this)">X</button></td>
+        `;
       }
-      window.cgpaChartInstance = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: cgpaHistory.map(item => `Sem ${item.sem}`),
-          datasets: [{
-            label: "Semester SGPA",
-            data: cgpaHistory.map(item => item.sgpa),
-            fill: false,
-            borderColor: "#007bff",
-            tension: 0.2
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, max: 10 }
+
+      window.removeRow = function(button) {
+        const row = button.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+      }
+
+      window.calculateCGPA = function() {
+        const rows = document.querySelectorAll("#semesterTable tbody tr");
+        let totalCredits = 0, weightedSum = 0;
+        let sgpaData = [];
+        let labels = [];
+
+        rows.forEach((row, index) => {
+          const sgpa = parseFloat(row.cells[1].querySelector("input").value);
+          const credits = parseInt(row.cells[2].querySelector("input").value);
+
+          if (!isNaN(sgpa) && !isNaN(credits)) {
+            weightedSum += sgpa * credits;
+            totalCredits += credits;
+            sgpaData.push(credits);
+            labels.push(`Sem ${index+1}`);
           }
-        }
-      });
-    }
+        });
 
-    function downloadResult() {
-      const result = document.getElementById("result").innerText;
-      if (!result) {
-        alert("Please calculate CGPA first.");
-        return;
+        if (totalCredits > 0) {
+          const cgpa = (weightedSum / totalCredits).toFixed(2);
+          document.getElementById("result").innerHTML =
+            `🎓 Your CGPA is: <span style="color:#00ffae;">${cgpa}</span> (≈ ${(cgpa * 9.5).toFixed(2)}%)`;
+          document.getElementById("result").style.display = "block";
+
+          drawChart(labels, sgpaData);
+        } else {
+          alert("⚠ Please fill in all SGPA and Credit fields!");
+        }
       }
-      const blob = new Blob([result], { type: "text/plain;charset=utf-8" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "cgpa_result.txt";
-      link.click();
+
+      window.resetTable = function() {
+        const tbody = document.getElementById("semesterTable").getElementsByTagName("tbody")[0];
+        tbody.innerHTML = `
+          <tr>
+            <td><input type="number" min="1" value="1" /></td>
+            <td><input type="number" min="0" max="10" step="0.01" /></td>
+            <td><input type="number" min="1" /></td>
+            <td><button onclick="removeRow(this)">X</button></td>
+          </tr>
+        `;
+        semesterCounter = 1;
+        document.getElementById("result").style.display = "none";
+        if (chart) chart.destroy();
+      }
+
+      function drawChart(labels, data) {
+        const ctx = document.getElementById("cgpaChart").getContext("2d");
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Credit Contribution",
+              data: data,
+              backgroundColor: [
+                "#ff6384","#36a2eb","#ffcd56","#4bc0c0",
+                "#9966ff","#ff9f40","#00d9ff","#00ffae"
+              ],
+              borderColor: "#fff",
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#f5f5f5" }
+              }
+            }
+          }
+        });
+      }
+
+      window.downloadPDF = function() {
+        const element = document.getElementById("content");
+
+        // Insert name, roll no, and date before export
+        const name = document.getElementById("studentName").value || "Not Provided";
+        const roll = document.getElementById("rollNo").value || "Not Provided";
+        const today = new Date().toLocaleDateString();
+
+        const header = document.createElement("div");
+        header.innerHTML = `<h3 style="color:#00ffae; text-align:center; margin-bottom:20px;">
+          Name: ${name} &nbsp;&nbsp; | &nbsp;&nbsp; Roll No: ${roll} <br> Date: ${today}
+        </h3>`;
+        element.insertBefore(header, element.firstChild);
+
+        // Resize chart for PDF only (smaller size)
+        const chartCanvas = document.getElementById("cgpaChart");
+        const originalWidth = chartCanvas.style.width;
+        const originalHeight = chartCanvas.style.height;
+
+        chartCanvas.style.width = "250px";
+        chartCanvas.style.height = "250px";
+        if (chart) chart.resize();
+
+        const opt = {
+          margin: 0.5,
+          filename: "cgpa_calculator.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+        };
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            // Remove header after saving
+            element.removeChild(header);
+
+            // Revert chart size after PDF generation
+            chartCanvas.style.width = originalWidth;
+            chartCanvas.style.height = originalHeight;
+            if (chart) chart.resize();
+          });
+      }
     }
   </script>
 </body>
 </html>
+
